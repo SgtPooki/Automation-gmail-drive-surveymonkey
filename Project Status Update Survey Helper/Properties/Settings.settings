@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Project_Status_Update_Survey_Helper.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="fromEmail" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Gabrielle.Suglia@nerdery.com</Value>
+    </Setting>
+    <Setting Name="spreadsheetName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">COPY Survey Document</Value>
+    </Setting>
+    <Setting Name="emailSubject" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Project Status Update.</Value>
+    </Setting>
+    <Setting Name="signInEmail" Type="System.String" Scope="User">
+      <Value Profile="(Default)">rdempsey@nerdery.com</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
