@@ -129,12 +129,12 @@ namespace Project_Status_Update_Survey_Helper
                     this.spreadsheet = entry;
                     break;
                 }
-                else
-                {
-                    txtLog.AppendText("Could not find a spreadsheet named " + Settings.Default.spreadsheetName +
-                        ". Please update the spreadsheet name in the settings, or create the spreadsheet");
-                    return;
-                }
+            }
+            if (this.spreadsheet == null)
+            {
+                txtLog.AppendText("Could not find a spreadsheet named " + Settings.Default.spreadsheetName +
+                    ". Please update the spreadsheet name in the settings, or create the spreadsheet");
+                return;
             }
 
             txtLog.AppendText("Spreadsheet loaded." + Environment.NewLine);

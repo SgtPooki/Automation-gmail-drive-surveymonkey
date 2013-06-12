@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Project Status Update Survey Helper")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Windows User")]
+[assembly: AssemblyCompany("The Nerdery")]
 [assembly: AssemblyProduct("Project Status Update Survey Helper")]
 [assembly: AssemblyCopyright("Copyright © Windows User 2013")]
 [assembly: AssemblyTrademark("")]
