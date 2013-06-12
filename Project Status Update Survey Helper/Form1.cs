@@ -104,21 +104,11 @@ namespace Project_Status_Update_Survey_Helper
                 }
             }
 
-            //We need to parse the data and get it ready to save in google spreadsheets.
-
-            //connect to google drive using same user/pass, save data.
             startSpreadSheet(user, pass);
-
-            //output the contacts in the format needed.
-
         }
 
         private void startSpreadSheet(String user, String pass)
         {
-            //placeholder for the spreadsheet we want.
-            //this.spreadsheet
-            //SpreadsheetEntry spreadsheet = new SpreadsheetEntry();
-
             //use clientlogin for authorization
             service.setUserCredentials(user, pass);
 
@@ -129,21 +119,22 @@ namespace Project_Status_Update_Survey_Helper
             SpreadsheetFeed feed = service.Query(query);
 
             txtLog.AppendText("Loading the spreadsheet..." + Environment.NewLine);
-            bool found = false;
+
             // Iterate through all of the spreadsheets returned
             foreach (SpreadsheetEntry entry in feed.Entries)
             {
                 // Print the title of this spreadsheet to the screen
-                if (entry.Title.Text == "Test Automation")
+                if (entry.Title.Text == Settings.Default.spreadsheetName)
                 {
                     this.spreadsheet = entry;
-                    found = true;
                     break;
                 }
-            }
-            if (!found)
-            {
-                throw new NotImplementedException();
+                else
+                {
+                    txtLog.AppendText("Could not find a spreadsheet named " + Settings.Default.spreadsheetName +
+                        ". Please update the spreadsheet name in the settings, or create the spreadsheet");
+                    return;
+                }
             }
 
             txtLog.AppendText("Spreadsheet loaded." + Environment.NewLine);
@@ -627,11 +618,11 @@ namespace Project_Status_Update_Survey_Helper
             String pattern = "The new status: \"Completed\"";
             if (Regex.IsMatch(emailBody, pattern))
             {
-                pattern = "Project: ([^\\n])*";
+                pattern = "Project: ([^\n]*)";
                 this.ProjectName = Regex.Match(emailBody, pattern).Groups[1].Value;
-
-                pattern = "Project: [^(]+ \\(([a-zA-Z0-9\\s]+)\\)";
-                this.ProjectNumber = Regex.Match(emailBody, this.ProjectName).Groups[1].Value;
+                
+                pattern = "[^(]+ \\(([^\\)]+)\\)";
+                this.ProjectNumber = Regex.Match(this.ProjectName, pattern).Groups[1].Value;
 
                 pattern = "Client: ([^\\n]*)$";
                 this.Client = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
