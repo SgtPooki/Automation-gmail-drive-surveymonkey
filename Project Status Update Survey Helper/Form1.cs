@@ -56,12 +56,23 @@ namespace Project_Status_Update_Survey_Helper
             IEmailClient ImapClient = EmailClientFactory.GetClient(EmailClientEnum.IMAP);
             string user = txtUserName.Text;
             string pass = txtPassword.Text;
-            ImapClient.Connect("imap.gmail.com", user, pass, 993, true);
+            try{
+            ImapClient.Connect("imap.gmail.com", user, pass, 993, true);            
+            }
+            catch(Exception exception)
+            {
+                txtLog.AppendText("There was an error specifically with connecting to your gmail account. (your pw is probably wrong)");
+                txtPassword.Focus();
+                txtPassword.SelectAll();
+                return;
+            }
+
             ImapClient.SetCurrentFolder("INBOX");
             // I assume that 5 is the last "ID" readed by my client. 
-            // If I want to read all messages i use "ImapClient.LoadMessages();"
 
+            //I have modified the D.Net library a little in order to allow me to use the settings properties of this windows form app
             ImapClient.LoadMessages("UNSEEN SUBJECT \"" + Settings.Default.emailSubject + "\" FROM \"" + Settings.Default.fromEmail + "\"");
+
             txtLog.AppendText(ImapClient.Messages.Count.ToString() + " project status update emails need to be parsed." + Environment.NewLine);
 
             List<IEmail> unreadMessages = ImapClient.Messages;
@@ -76,7 +87,7 @@ namespace Project_Status_Update_Survey_Helper
                 if (email.Subject.Contains("Project Status Update.") && email.From.Contains("Gabrielle.Suglia@nerdery.com"))
                 {
                     email.LoadInfos();
-                    ProjectStatusUpdateRow newRow = new ProjectStatusUpdateRow((String)email.TextBody);
+                    ProjectStatusUpdateRow newRow = new ProjectStatusUpdateRow((String)email.TextBody, email.Date);
                     if (newRow.IsValid)
                     {
                         if (!newRowWorksheetsNeeded.ContainsKey(newRow.workSheetTitle))
@@ -251,10 +262,8 @@ namespace Project_Status_Update_Survey_Helper
                     cellEntry = new CellEntry(1, 21, "Action taken/comments");
                     cellFeed.Insert(cellEntry);
 
-
-                    //add to custom worksheets object so we can read it later.
-                    worksheets.Add(new ProjectStatusUpdateWorksheet(service, worksheet));
-
+                    ProjectStatusUpdateWorksheet newCustomWorksheet = new ProjectStatusUpdateWorksheet(service, worksheet);
+                    
                     // Define the URL to request the list feed of the worksheet.
                     AtomLink listFeedLink = worksheet.Links.FindService(GDataSpreadsheetsNameTable.ListRel, null);
 
@@ -268,10 +277,14 @@ namespace Project_Status_Update_Survey_Helper
                         {
                             service.Insert(listFeed, row.row);
                         }
+                        newCustomWorksheet.rows.Add(row);
                     }
+
+                    //add to custom worksheets object so we can read it later.
+                    worksheets.Add(newCustomWorksheet);
+
                     addedEmailData = true;
                     /**/
-
                     newRowWorksheetsNeeded[title] = true;
                 }
 
@@ -281,8 +294,6 @@ namespace Project_Status_Update_Survey_Helper
             bool needToSendSurvey = false;
             foreach (ProjectStatusUpdateWorksheet ws in worksheets)
             {
-                //txtResult.AppendText(dash + "WORKSHEET" + dash + Environment.NewLine);
-
                 foreach (ProjectStatusUpdateRow row in ws.rows)
                 {
                     if (row.SendSurvey && row.SurveySentDate == null)
@@ -312,6 +323,7 @@ namespace Project_Status_Update_Survey_Helper
             {
                 txtLog.AppendText("No rows were found that need updating... Double check the spreadsheet to ensure this is correct" + Environment.NewLine
                     + "Please contact Russell Dempsey if you feel this is incorrect.");
+                txtLog.AppendText(Environment.NewLine + Convert.ToString(worksheets.Count) + " worksheets, and " + Convert.ToString(newRows.Count) + " rows added from emails");
             }
         }
 
@@ -553,8 +565,14 @@ namespace Project_Status_Update_Survey_Helper
         }
 
         //constructor from gmail email after parsing the data.
-        public ProjectStatusUpdateRow(String emailBody)
+        public ProjectStatusUpdateRow(String emailBody, DateTime date)
         {
+            if (this.parseEmailWithRegex(emailBody, date))
+            {
+                this.IsValid = true;
+                this.row = this.newRow();
+            }
+            /*
             String[] details = new String[] {"Project: ", "Client: ", "Primary Contact: ", "SPM: ", "Lead Developer(s): ", "AE: ", "SE: ", "Date: "};
             String[] result = new String[details.Length];
             if (emailBody.IndexOf("The new status: \"Completed\"") != -1)
@@ -568,6 +586,12 @@ namespace Project_Status_Update_Survey_Helper
                     int endIndex = emailBody.IndexOf(Environment.NewLine,dataIndex);
                     result[counter++] = emailBody.Substring(dataIndex, endIndex-dataIndex);
                 }
+
+                //Gillian will be updating the status update emails soon and they will indicate whether a survey should be sent or not.
+                //TODO: add parsing to determine whether to send these surveys or not.
+                this.SendSurvey = true;
+
+                this.SurveySentDate = null;
 
                 this.ProjectName = result[0];
                 //String projNum = result[0].Split('(')[1];
@@ -589,11 +613,60 @@ namespace Project_Status_Update_Survey_Helper
                 this.SE = result[6];
 
                 this.ProjectClosed = DateTime.Parse(result[7].Substring(0,result[7].IndexOf(" at ")));
+                this.ProjectClosed = date;
 
                 this.workSheetTitle = ((DateTime)this.ProjectClosed).ToString("MMMM yyyy");
 
                 this.row = this.newRow();
             }
+             * */
+        }
+
+        public bool parseEmailWithRegex(String emailBody, DateTime date)
+        {
+            String pattern = "The new status: \"Completed\"";
+            if (Regex.IsMatch(emailBody, pattern))
+            {
+                pattern = "Project: ([^\\n])*";
+                this.ProjectName = Regex.Match(emailBody, pattern).Groups[1].Value;
+
+                pattern = "Project: [^(]+ \\(([a-zA-Z0-9\\s]+)\\)";
+                this.ProjectNumber = Regex.Match(emailBody, this.ProjectName).Groups[1].Value;
+
+                pattern = "Client: ([^\\n]*)$";
+                this.Client = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
+                
+                pattern = "Primary Contact: ([a-zA-Z'\\s]*) \\(";
+                this.Name = Regex.Match(emailBody, pattern).Groups[1].Value;
+
+                pattern = "Primary Contact: [^(]*\\(([^\\)]*)\\)";
+                this.email = Regex.Match(emailBody, pattern).Groups[1].Value;
+
+                pattern = "SPM: ([^\\n]*)$";
+                this.SPM = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
+
+                pattern = "Lead Developer\\(s\\): ([^\\n]*)$";
+                this.LeadDev = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
+
+                pattern = "AE: ([^\\n]*)$";
+                this.SalesAssociate = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
+
+                pattern = "SE: ([^\\n]*)$";
+                this.SE = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
+
+
+                this.ProjectClosed = date;
+
+                this.workSheetTitle = date.ToString("MMMM yyyy");
+
+                this.SendSurvey = true;
+
+                this.SurveySentDate = null;
+
+                return true;
+            }
+
+            return false;
         }
 
         public ProjectStatusUpdateRow()
