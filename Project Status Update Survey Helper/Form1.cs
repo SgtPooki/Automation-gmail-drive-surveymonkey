@@ -29,8 +29,6 @@ namespace Project_Status_Update_Survey_Helper
         private List<ProjectStatusUpdateRow> newRows;
         private Dictionary<String, bool> newRowWorksheetsNeeded;
 
-        private bool recoveringFromNoWorksheetError = false;
-
         public SurveyHelper()
         {
             InitializeComponent();
