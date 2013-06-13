@@ -84,7 +84,7 @@ namespace Project_Status_Update_Survey_Helper
                 IEmail email = (IEmail)unreadMessages[i];
 
                 //make sure we're dealing with the correct emails only!
-                if (email.Subject.Contains("Project Status Update.") && email.From.Contains("Gabrielle.Suglia@nerdery.com"))
+                if (email.Subject.Contains(Settings.Default.emailSubject) && email.From.Contains(Settings.Default.fromEmail))
                 {
                     email.LoadInfos();
                     ProjectStatusUpdateRow newRow = new ProjectStatusUpdateRow((String)email.TextBody, email.Date);
