@@ -616,32 +616,37 @@ namespace Project_Status_Update_Survey_Helper
             String pattern = "The new status: \"Completed\"";
             if (Regex.IsMatch(emailBody, pattern))
             {
-                pattern = "Project: ([^\n]*)";
+                pattern = "Project: (.*)";
                 this.ProjectName = Regex.Match(emailBody, pattern).Groups[1].Value;
                 
-                pattern = "[^(]+ \\(([^\\)]+)\\)";
+                pattern = "\\((.*)\\)";
                 this.ProjectNumber = Regex.Match(this.ProjectName, pattern).Groups[1].Value;
 
-                pattern = "Client: ([^\\n]*)$";
-                this.Client = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
+                pattern = "Client: (.*)";
+                this.Client = Regex.Match(emailBody, pattern).Groups[1].Value;
                 
-                pattern = "Primary Contact: ([a-zA-Z'\\s]*) \\(";
-                this.Name = Regex.Match(emailBody, pattern).Groups[1].Value;
 
-                pattern = "Primary Contact: [^(]*\\(([^\\)]*)\\)";
-                this.email = Regex.Match(emailBody, pattern).Groups[1].Value;
+                pattern = "Primary Contact: (.*)";
+                String nameWemail = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
 
-                pattern = "SPM: ([^\\n]*)$";
-                this.SPM = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
 
-                pattern = "Lead Developer\\(s\\): ([^\\n]*)$";
-                this.LeadDev = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
+                this.Name = Regex.Match(nameWemail, "(.+) \\(").Groups[1].Value.Trim();
 
-                pattern = "AE: ([^\\n]*)$";
-                this.SalesAssociate = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
+                //pattern = "Primary Contact: [^(]*\\(([^\\)]*)\\)";
+                this.email = Regex.Match(nameWemail, "\\((.*)\\)").Groups[1].Value;
+                       
 
-                pattern = "SE: ([^\\n]*)$";
-                this.SE = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
+                pattern = "SPM: ([^\\n]*)";
+                this.SPM = Regex.Match(emailBody, pattern).Groups[1].Value;
+
+                pattern = "Lead Developer\\(s\\): ([^\\r\\n]*)";
+                this.LeadDev = Regex.Match(emailBody, pattern).Groups[1].Value;
+
+                pattern = "AE: ([^\\r\\n]*)";
+                this.SalesAssociate = Regex.Match(emailBody, pattern).Groups[1].Value;
+
+                pattern = "SE: ([^\\r\\n]*)";
+                this.SE = Regex.Match(emailBody, pattern).Groups[1].Value;
 
 
                 this.ProjectClosed = date;
