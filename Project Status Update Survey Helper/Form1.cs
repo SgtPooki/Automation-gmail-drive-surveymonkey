@@ -629,8 +629,8 @@ namespace Project_Status_Update_Survey_Helper
                 pattern = "Primary Contact: (.*)";
                 String nameWemail = Regex.Match(emailBody, pattern, RegexOptions.Multiline).Groups[1].Value;
 
-
-                this.Name = Regex.Match(nameWemail, "(.+) \\(").Groups[1].Value.Trim();
+                var nameGroups = Regex.Match(nameWemail, "(.+) \\(|(.*)").Groups;
+                this.Name = (nameGroups[1].Value.Trim() == "") ? nameGroups[2].Value.Trim() : nameGroups[1].Value.Trim();
 
                 //pattern = "Primary Contact: [^(]*\\(([^\\)]*)\\)";
                 this.email = Regex.Match(nameWemail, "\\((.*)\\)").Groups[1].Value;
